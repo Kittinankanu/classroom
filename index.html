@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบชั้นเรียน</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f1117;--surface:#191c26;--card:#1f2333;--border:#2a2f42;--accent:#4f8ef7;--accent2:#38d9a9;--warn:#f7b731;--danger:#fc5c65;--text:#e8eaf0;--muted:#7a8099;--font:'IBM Plex Sans Thai',sans-serif}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.35;pointer-events:none;z-index:0}
+#app{position:relative;z-index:1}
+.screen{display:none;min-height:100vh}.screen.active{display:flex}
+#login-screen{align-items:center;justify-content:center;padding:24px}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:48px 40px;width:100%;max-width:420px;animation:fadeUp .5s ease}
+.login-logo{width:52px;height:52px;background:var(--accent);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:26px}
+.login-title{text-align:center;font-size:22px;font-weight:600;margin-bottom:6px}
+.login-sub{text-align:center;color:var(--muted);font-size:14px;margin-bottom:36px}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:8px}
+.field input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 16px;color:var(--text);font-family:var(--font);font-size:15px;transition:border-color .2s,box-shadow .2s;outline:none}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,142,247,.15)}
+.field input::placeholder{color:#3d4460}
+.btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;transition:opacity .2s,transform .15s;margin-top:4px}
+.btn:disabled{opacity:.45;cursor:default}
+.error-msg{background:rgba(252,92,101,.12);border:1px solid rgba(252,92,101,.3);color:#fc5c65;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:14px;display:none}
+.error-msg.show{display:block}
+#dash-screen{flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-icon{width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.topbar-name{font-weight:600;font-size:15px}
+.topbar-room{font-size:13px;color:var(--muted)}
+.logout-btn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:7px 14px;font-family:var(--font);font-size:13px;cursor:pointer;transition:all .2s}
+.tabs{display:flex;gap:4px;padding:16px 28px 0;border-bottom:1px solid var(--border);background:var(--surface)}
+.tab{padding:10px 20px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:var(--font);font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;margin-bottom:-1px}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.content{padding:28px;max-width:900px;margin:0 auto;width:100%}
+.tab-panel{display:none;animation:fadeUp .3s ease}.tab-panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:500;color:var(--muted);letter-spacing:.6px;margin-bottom:16px}
+.score-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.score-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.score-label{font-size:12px;color:var(--muted);margin-bottom:8px}
+.score-value{font-size:28px;font-weight:600;color:var(--accent);line-height:1}
+.score-max{font-size:13px;color:var(--muted)}
+.grade-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-weight:600;font-size:15px}
+.grade-A{background:rgba(56,217,169,.15);color:var(--accent2)}.grade-B{background:rgba(79,142,247,.15);color:var(--accent)}.grade-C{background:rgba(247,183,49,.15);color:var(--warn)}.grade-D{background:rgba(252,92,101,.12);color:#ff9a9a}.grade-F{background:rgba(252,92,101,.2);color:var(--danger)}
+.attend-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.attend-stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.attend-stat .num{font-size:26px;font-weight:600;line-height:1;margin-bottom:4px}
+.attend-stat .lbl{font-size:12px;color:var(--muted)}
+.stat-present .num{color:var(--accent2)}.stat-absent .num{color:var(--danger)}.stat-late .num{color:var(--warn)}.stat-leave .num{color:var(--accent)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px 14px;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:12px 14px;border-bottom:1px solid rgba(42,47,66,.6);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-มาเรียน{background:rgba(56,217,169,.15);color:var(--accent2)}.badge-ขาด{background:rgba(252,92,101,.15);color:var(--danger)}.badge-สาย{background:rgba(247,183,49,.15);color:var(--warn)}.badge-ลา{background:rgba(79,142,247,.15);color:var(--accent)}
+.material-list{display:flex;flex-direction:column;gap:10px}
+.material-item{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color .2s,background .2s}
+.material-item:hover{border-color:var(--accent);background:rgba(79,142,247,.06)}
+.material-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.type-pdf{background:rgba(252,92,101,.15)}.type-powerpoint{background:rgba(247,183,49,.15)}.type-video{background:rgba(79,142,247,.15)}.type-default{background:rgba(56,217,169,.15)}
+.material-info{flex:1;min-width:0}
+.material-name{font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.material-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.loading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:60px;color:var(--muted);font-size:14px}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){.topbar{padding:12px 16px}.tabs{padding:12px 16px 0}.tab{padding:8px 12px;font-size:13px}.content{padding:16px}.attend-summary{grid-template-columns:repeat(2,1fr)}.login-box{padding:36px 24px}}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="login-screen" class="screen active">
+  <div class="login-box">
+    <div class="login-logo">📚</div>
+    <h1 class="login-title">ระบบชั้นเรียน</h1>
+    <p class="login-sub">กรอกรหัสนักเรียนและชื่อเพื่อเข้าสู่ระบบ</p>
+    <div class="field"><label>รหัสนักเรียน</label><input type="text" id="inp-id" placeholder="เช่น 67001" autocomplete="off" inputmode="numeric"></div>
+    <div class="field"><label>ชื่อ-นามสกุล</label><input type="text" id="inp-name" placeholder="เช่น สมชาย ใจดี" autocomplete="off"></div>
+    <button class="btn" id="login-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+<div id="dash-screen" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon">🎓</div>
+      <div><div class="topbar-name" id="user-name">—</div><div class="topbar-room" id="user-room">—</div></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">ออกจากระบบ</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('scores',this)">คะแนน &amp; เกรด</button>
+    <button class="tab" onclick="switchTab('attend',this)">การเข้าเรียน</button>
+    <button class="tab" onclick="switchTab('materials',this)">สื่อการสอน</button>
+  </div>
+  <div class="content">
+    <div id="tab-scores" class="tab-panel active"><div id="scores-content"><div class="loading"><div class="spinner"></div>กำลังโหลด...</div></div></div>
+    <div id="tab-attend" class="tab-panel"><div id="attend-content"><div class="loading"><div class="spinner"></div>กำลังโหลด...</div></div></div>
+    <div id="tab-materials" class="tab-panel"><div id="materials-content"><div class="loading"><div class="spinner"></div>กำลังโหลด...</div></div></div>
+  </div>
+</div>
+</div>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbwnuH0K7_Ze6CFQrIEQ0NzEYxexNH9LZ_vJhf7Iux0W5VlEHAHD8jmyrQJhQPjmJ1LUOw/exec';
+let currentUser=null;
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login-screen').classList.contains('active'))doLogin()});
+async function doLogin(){const id=document.getElementById('inp-id').value.trim();const name=document.getElementById('inp-name').value.trim();const btn=document.getElementById('login-btn');const err=document.getElementById('login-error');if(!id||!name){showError('กรุณากรอกข้อมูลให้ครบ');return}btn.disabled=true;btn.textContent='กำลังตรวจสอบ...';err.classList.remove('show');try{const res=await api({action:'login',id,name});if(res.ok){currentUser=res;showDashboard()}else showError(res.error||'เกิดข้อผิดพลาด')}catch(e){showError('ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่')}finally{btn.disabled=false;btn.textContent='เข้าสู่ระบบ'}}
+function showError(msg){const el=document.getElementById('login-error');el.textContent=msg;el.classList.add('show')}
+async function showDashboard(){document.getElementById('login-screen').classList.remove('active');document.getElementById('dash-screen').classList.add('active');document.getElementById('user-name').textContent=currentUser.name;document.getElementById('user-room').textContent=currentUser.room||'นักเรียน';try{const data=await api({action:'dashboard',id:currentUser.id});if(data.ok){renderScores(data.scores);renderAttendance(data.records,data.summary);renderMaterials(data.materials)}}catch(e){document.getElementById('scores-content').innerHTML='<div class="empty">ไม่สามารถโหลดข้อมูลได้</div>'}}
+function logout(){currentUser=null;document.getElementById('dash-screen').classList.remove('active');document.getElementById('login-screen').classList.add('active');document.getElementById('inp-id').value='';document.getElementById('inp-name').value='';}
+function switchTab(name,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+name).classList.add('active');}
+function renderScores(scores){const el=document.getElementById('scores-content');if(!scores||scores.length===0){el.innerHTML='<div class="empty">ยังไม่มีข้อมูลคะแนน</div>';return}let html='';scores.forEach(row=>{const grade=row['เกรด']||'';const total=row['รวม']!==undefined?row['รวม']:'—';const mid=row['สอบกลางภาค (30)']!==undefined?row['สอบกลางภาค (30)']:row['สอบกลางภาค']||'—';const fin=row['สอบปลายภาค (40)']!==undefined?row['สอบปลายภาค (40)']:row['สอบปลายภาค']||'—';const hw=row['งาน/ชิ้นงาน (20)']!==undefined?row['งาน/ชิ้นงาน (20)']:row['งาน/ชิ้นงาน']||'—';const att=row['เข้าเรียน (10)']!==undefined?row['เข้าเรียน (10)']:row['เข้าเรียน']||'—';html+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="card-title" style="margin:0">ผลการเรียน</div><span class="grade-badge grade-${grade}">${grade||'—'}</span></div><div class="score-grid"><div class="score-item"><div class="score-label">คะแนนรวม</div><div class="score-value">${total}</div><div class="score-max">/ 100</div></div><div class="score-item"><div class="score-label">กลางภาค</div><div class="score-value">${mid}</div><div class="score-max">/ 30</div></div><div class="score-item"><div class="score-label">ปลายภาค</div><div class="score-value">${fin}</div><div class="score-max">/ 40</div></div><div class="score-item"><div class="score-label">งาน</div><div class="score-value">${hw}</div><div class="score-max">/ 20</div></div><div class="score-item"><div class="score-label">เข้าเรียน</div><div class="score-value">${att}</div><div class="score-max">/ 10</div></div></div></div>`;});el.innerHTML=html;}
+function renderAttendance(records,summary){const el=document.getElementById('attend-content');summary=summary||{};let html=`<div class="card"><div class="card-title">สรุปการเข้าเรียน</div><div class="attend-summary"><div class="attend-stat stat-present"><div class="num">${summary['มาเรียน']||0}</div><div class="lbl">มาเรียน</div></div><div class="attend-stat stat-absent"><div class="num">${summary['ขาด']||0}</div><div class="lbl">ขาด</div></div><div class="attend-stat stat-late"><div class="num">${summary['สาย']||0}</div><div class="lbl">สาย</div></div><div class="attend-stat stat-leave"><div class="num">${summary['ลา']||0}</div><div class="lbl">ลา</div></div></div></div>`;if(!records||records.length===0){html+='<div class="empty">ยังไม่มีประวัติการเข้าเรียน</div>'}else{html+=`<div class="card"><div class="card-title">ประวัติการเข้าเรียน</div><div class="table-wrap"><table><thead><tr><th>วันที่</th><th>วิชา/คาบ</th><th>สถานะ</th><th>หมายเหตุ</th></tr></thead><tbody>`;records.slice().reverse().forEach(r=>{html+=`<tr><td>${r.date||'—'}</td><td>${r.subject||'—'}</td><td><span class="badge badge-${r.status}">${r.status||'—'}</span></td><td style="color:var(--muted)">${r.note||'—'}</td></tr>`});html+='</tbody></table></div></div>';}el.innerHTML=html;}
+function renderMaterials(materials){const el=document.getElementById('materials-content');if(!materials||materials.length===0){el.innerHTML='<div class="empty">ยังไม่มีสื่อการสอน</div>';return}const iconMap={pdf:{emoji:'📄',cls:'type-pdf'},powerpoint:{emoji:'📊',cls:'type-powerpoint'},วิดีโอ:{emoji:'▶️',cls:'type-video'},video:{emoji:'▶️',cls:'type-video'}};const grouped={};materials.forEach(m=>{const s=m.subject||'ทั่วไป';if(!grouped[s])grouped[s]=[];grouped[s].push(m)});let html='';Object.entries(grouped).forEach(([subj,items])=>{html+=`<div class="card"><div class="card-title">${subj}</div><div class="material-list">`;items.forEach(m=>{const icon=iconMap[(m.type||'').toLowerCase()]||{emoji:'📁',cls:'type-default'};html+=`<a class="material-item" href="${m.url||'#'}" target="_blank" rel="noopener"><div class="material-icon ${icon.cls}">${icon.emoji}</div><div class="material-info"><div class="material-name">${m.title||'ไม่มีชื่อ'}</div><div class="material-meta">${m.type||''} ${m.date?'· '+m.date:''}</div></div><div style="color:var(--muted);font-size:18px">›</div></a>`});html+='</div></div>';});el.innerHTML=html;}
+async function api(params){const url=new URL(API_URL);Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));const res=await fetch(url.toString());return res.json();}
+</script>
+</body>
+</html>
